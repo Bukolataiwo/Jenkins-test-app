@@ -1,29 +1,27 @@
 #!/bin/bash
 
-echo "Downloading Splunk..."
+echo "Installing Apache and PHP..."
 
-# VALID Splunk version (tested format)
-wget -O /tmp/splunk.tgz "https://download.splunk.com/products/splunk/releases/9.1.2/linux/splunk-9.1.2-linux-2.6-x86_64.tgz"
+# Install Apache and PHP
+sudo dnf install -y httpd php php-cli
 
-if [ $? -ne 0 ]; then
-    echo "Download failed ❌"
-    exit 1
-fi
+echo "Starting Apache..."
 
-echo "Installing Splunk..."
+# Start and enable Apache
+sudo systemctl enable httpd
+sudo systemctl start httpd
 
-sudo rm -rf /opt/splunk
-sudo tar -xvzf /tmp/splunk.tgz -C /opt
+echo "Deploying PHP application..."
 
-if [ ! -d "/opt/splunk" ]; then
-    echo "Installation failed ❌"
-    exit 1
-fi
+# Create a simple PHP app
+sudo bash -c 'cat > /var/www/html/index.php <<EOF
+<?php
+echo "<h1>PHP App Deployed via Jenkins ✅</h1>";
+echo "<p>Server Time: " . date("Y-m-d H:i:s") . "</p>";
+?>
+EOF'
 
-echo "Starting Splunk..."
+echo "Restarting Apache..."
+sudo systemctl restart httpd
 
-sudo /opt/splunk/bin/splunk start --accept-license --answer-yes --no-prompt
-sudo /opt/splunk/bin/splunk enable boot-start
-
-echo "Splunk deployment complete ✅"
-``
+echo "Deployment complete ✅"
