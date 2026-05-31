@@ -1,19 +1,21 @@
 #!/bin/bash
 
-echo "Installing Docker..."
+echo "Downloading Splunk..."
 
-# Install Docker
-sudo dnf install -y dnf-plugins-core
-sudo dnf config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
-sudo dnf install -y docker-ce docker-ce-cli containerd.io
+# Download Splunk (trial version)
+wget -O /tmp/splunk.tgz https://download.splunk.com/products/splunk/releases/9.0.0/linux/splunk-9.0.0-Linux-x86_64.tgz
 
-echo "Starting Docker..."
-sudo systemctl enable docker
-sudo systemctl start docker
+echo "Installing Splunk..."
 
-echo "Running a Docker container..."
+# Extract Splunk
+sudo tar -xvzf /tmp/splunk.tgz -C /opt
 
-# Run a simple test container
-sudo docker run -d -p 8081:80 nginx
+echo "Starting Splunk..."
 
-echo "Docker deployment complete ✅"
+# Start Splunk and accept license
+sudo /opt/splunk/bin/splunk start --accept-license --answer-yes --no-prompt
+
+# Enable auto start
+sudo /opt/splunk/bin/splunk enable boot-start
+
+echo "Splunk deployment complete ✅"
