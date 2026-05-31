@@ -9,23 +9,20 @@ pipeline {
             }
         }
 
-        stage('Deploy Docker App') {
-            steps {
-                sh '''
-                ssh -o StrictHostKeyChecking=no admin@172.27.109.67 "
-                cd ~/docker-app || exit
+    stage('Multi-Server Deploy') {
+    steps {
+        sh '''
+        for server in 172.27.109.67 172.27.109.68
+        do
+            echo "Deploying to $server"
 
-                echo 'Stopping old containers...'
-                docker compose down
-
-                echo 'Starting new containers...'
-                docker compose up -d --build
-
-                echo 'Deployment complete ✅'
-                "
-                '''
-            }
-        }
-
+            ssh -o StrictHostKeyChecking=no admin@$server "
+            cd ~/docker-app || exit
+            docker compose down
+            docker compose up -d --build
+            "
+        done
+        '''
     }
 }
+
