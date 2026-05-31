@@ -1,28 +1,80 @@
 pipeline {
     agent any
 
+    parameters {
+        choice(
+            name: 'ENV',
+            choices: ['dev', 'prod', 'both'],
+            description: 'Select environment to deploy'
+        )
+    }
+
     stages {
 
-        stage('Checkout') {
+        stage('Checkout Code') {
             steps {
                 checkout scm
             }
         }
 
-    stage('Multi-Server Deploy') {
-    steps {
-        sh '''
-        for server in 172.27.109.67 172.27.109.68
-        do
-            echo "Deploying to $server"
+        stage('Deploy Application') {
+            steps {
+                script {
 
-            ssh -o StrictHostKeyChecking=no admin@$server "
-            cd ~/docker-app || exit
-            docker compose down
-            docker compose up -d --build
-            "
-        done
-        '''
+                    if (params.ENV == 'dev') {
+
+                        echo "Deploying to DEV server..."
+
+                        sh '''
+                        ssh -o StrictHostKeyChecking=no admin@172.27.109.67 "
+                        cd ~/docker-app || exit
+                        docker compose down
+                        docker compose up -d --build
+                        "
+                        '''
+
+                    } else if (params.ENV == 'prod') {
+
+                        echo "Deploying to PROD server..."
+
+                        sh '''
+                        ssh -o StrictHostKeyChecking=no admin@172.27.109.68 "
+                        cd ~/docker-app || exit
+                        docker compose down
+                        docker compose up -d --build
+                        "
+                        '''
+
+                    } else {
+
+                        echo "Deploying to BOTH servers..."
+
+                        sh '''
+                        for server in 172.27.109.67 172.27.109.68
+                        do
+                            echo "Deploying to $server"
+
+                            ssh -o StrictHostKeyChecking=no admin@$server "
+                            cd ~/docker-app || exit
+                            docker compose down
+                            docker compose up -d --build
+                            "
+                        done
+                        '''
+
+                    }
+                }
+            }
+        }
+
+    }
+
+    post {
+        success {
+            echo "✅ Deployment successful!"
+        }
+        failure {
+            echo "❌ Deployment failed. Check logs."
+        }
     }
 }
-
