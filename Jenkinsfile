@@ -8,27 +8,11 @@ pipeline {
             }
         }
 
-        stage('Install Nginx') {
+        stage('Deploy Application') {
             steps {
                 sh '''
-                sudo dnf install nginx -y
-                '''
-            }
-        }
-
-        stage('Deploy') {
-            steps {
-                sh '''
-                sudo cp index.html /usr/share/nginx/html/index.html
-                '''
-            }
-        }
-
-        stage('Restart Nginx') {
-            steps {
-                sh '''
-                sudo systemctl enable nginx
-                sudo systemctl restart nginx
+                chmod +x deploy.sh
+                ./deploy.sh
                 '''
             }
         }
