@@ -1,24 +1,42 @@
 #!/bin/bash
 
-echo "Installing Apache and PHP..."
-sudo dnf install -y httpd php php-cli
+echo "Installing Apache, PHP, and MySQL (MariaDB)..."
 
-echo "Configuring Apache to use port 8082..."
+# Install Apache + PHP + MariaDB
+sudo dnf install -y httpd php php-cli mariadb-server
 
-# Change port from 80 → 8082
-sudo sed -i 's/^Listen 80/Listen 8082/' /etc/httpd/conf/httpd.conf
+echo "Stopping Nginx (avoid port conflict)..."
+sudo systemctl stop nginx || true
+sudo systemctl disable nginx || true
 
 echo "Starting Apache..."
-
 sudo systemctl enable httpd
-sudo systemctl restart httpd
+sudo systemctl start httpd
 
-echo "Deploying PHP app..."
+echo "Starting MariaDB..."
+sudo systemctl enable mariadb
+sudo systemctl start mariadb
+
+echo "Configuring database..."
+
+# Secure MySQL setup (basic, non-interactive)
+sudo mysql -e "CREATE DATABASE myapp;"
+sudo mysql -e "CREATE USER 'appuser'@'localhost' IDENTIFIED BY 'password123';"
+sudo mysql -e "GRANT ALL PRIVILEGES ON myapp.* TO 'appuser'@'localhost';"
+sudo mysql -e "FLUSH PRIVILEGES;"
+
+echo "Deploying PHP app with DB connection..."
 
 sudo bash -c 'cat > /var/www/html/index.php <<EOF
 <?php
-echo "<h1>Apache + PHP App ✅</h1>";
-echo "<p>Running on port 8082</p>";
+\$conn = new mysqli("localhost", "appuser", "password123", "myapp");
+
+if (\$conn->connect_error) {
+    die("<h1>Database connection failed ❌</h1>");
+}
+
+echo "<h1>PHP + MySQL App ✅</h1>";
+echo "<p>Database Connected Successfully!</p>";
 ?>
 EOF'
 
