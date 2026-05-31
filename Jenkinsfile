@@ -11,14 +11,15 @@ pipeline {
         stage('Deploy Remote') {
             steps {
                 sh '''
-                scp -o StrictHostKeyChecking=no index.html admin@172.27.109.67:/tmp/index.html
+                scp -o StrictHostKeyChecking=no deploy.sh admin@172.27.109.67:/tmp/deploy.sh
 
                 ssh -o StrictHostKeyChecking=no admin@172.27.109.67 "
-                sudo cp /tmp/index.html /usr/share/nginx/html/index.html
-                sudo systemctl restart nginx
+                chmod +x /tmp/deploy.sh
+                /tmp/deploy.sh
                 "
                 '''
             }
         }
     }
 }
+``
